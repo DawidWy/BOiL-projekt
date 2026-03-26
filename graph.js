@@ -32,11 +32,27 @@ function addNode(node) {
 }
 function link(a, b) {
   conns.data[a][b] = true;
-  conns.data[b][a] = true;
 }
 function unlink(a,b) {
-  conns.data[a][b] = false
-  conns.data[a][b] = false
+  conns.data[a][b] = false;
+}
+function getOutgoing(number) {
+  let outgoing = [];
+  for (let i = 0; i < conns.size; i++) {
+    if (conns.data[number][i]) {
+      outgoing.push(i);
+    }
+  }
+  return outgoing;
+}
+function getIncoming(number) {
+  let incoming = [];
+  for (let i = 0; i < conns.size; i++) {
+    if (conns.data[i][number]) {
+      incoming.push(i);
+    }
+  }
+  return incoming;
 }
 let nodes = []
 let conns = new connMatrix();
@@ -45,8 +61,12 @@ const node = new cpmNode(10);
 
 addNode(node);
 addNode(node);
+addNode(node);
 
-link(0,1)
+link(0,1);
+link(1,2);
+link(0,2);
 
-console.log(node);
+console.log(getIncoming(0));
+console.log(getOutgoing(0));
 console.log(conns);
