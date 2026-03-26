@@ -1,9 +1,9 @@
 console.log("Skrypt załadowany");
 
-class conMatrix {
+class connMatrix {
   constructor(){
-    this.data = [[false]];
-    this.size = 1;
+    this.data = [];
+    this.size = 0;
   }
 
   extendMatrix() {
@@ -26,9 +26,27 @@ class cpmNode {
     this.lf = null;
   }
 }
-
+function addNode(node) {
+  nodes.push(node);
+  conns.extendMatrix();
+}
+function link(a, b) {
+  conns.data[a][b] = true;
+  conns.data[b][a] = true;
+}
+function unlink(a,b) {
+  conns.data[a][b] = false
+  conns.data[a][b] = false
+}
+let nodes = []
+let conns = new connMatrix();
+//Debug poniżej
 const node = new cpmNode(10);
-const conns = new conMatrix();
-conns.extendMatrix();
+
+addNode(node);
+addNode(node);
+
+link(0,1)
+
 console.log(node);
 console.log(conns);
