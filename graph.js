@@ -1,5 +1,5 @@
-console.log("Skrypt załadowany");
-
+// Klasa connMatrix to kierunkowa nieważona macierz łączności,
+// w skrócie notuje kto z kim się łączy w grafie
 class connMatrix {
   constructor(){
     this.data = [];
@@ -16,6 +16,7 @@ class connMatrix {
   }
 }
 
+// Klasa cpmNode to jeden węzeł w grafie
 class cpmNode {
   constructor(time){
     this.es = null;
@@ -26,16 +27,23 @@ class cpmNode {
     this.lf = null;
   }
 }
+// Funkcja addNode dodaje węzeł i poszerza connMatrix
 function addNode(node) {
   nodes.push(node);
   conns.extendMatrix();
 }
+
+// Funkcja link łączy 2 węzły po ich indeksach
 function link(a, b) {
   conns.data[a][b] = true;
 }
+
+// Funkcja unlink rozłącza 2 węzły po ich indeksach
 function unlink(a,b) {
   conns.data[a][b] = false;
 }
+
+// Funkcja getOutgoing zwraca listę węzłów do których dany węzeł się łączy
 function getOutgoing(number) {
   let outgoing = [];
   for (let i = 0; i < conns.size; i++) {
@@ -45,6 +53,8 @@ function getOutgoing(number) {
   }
   return outgoing;
 }
+
+// Funkcja getIncoming zwraca listę węzłów które się łączą do danego węzła
 function getIncoming(number) {
   let incoming = [];
   for (let i = 0; i < conns.size; i++) {
@@ -54,9 +64,15 @@ function getIncoming(number) {
   }
   return incoming;
 }
+
+// nodes to tablica węzłów, pewnie powinna być zdefiniowana poza biblioteką,
+// ale na razie jest zdefiniowana tutaj
 let nodes = []
+
+// conns to tablica łączności, taka sama sytuacja jak wyżej
 let conns = new connMatrix();
-//Debug poniżej
+
+// Przykładowe zastosowanie poniżej
 const node = new cpmNode(10);
 
 addNode(node);
