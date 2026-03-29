@@ -21,6 +21,17 @@ function addTaskToTable() {
         return;
     }
 
+    // Walidacja trybu zdarzeń
+    const modeSelect = document.getElementById('input-mode-select');
+    const mode = modeSelect ? modeSelect.value : 'PRED';
+    if (mode === 'EVENT') {
+        // Sprawdza czy wpisano format typu "1-2", "10-20"
+        if (!/^\d+-\d+$/.test(prev)) {
+            alert("W trybie zdarzeń musisz użyć formatu 'liczba-liczba', np. '1-2'!");
+            return;
+        }
+    }
+
     // Sprawdzenie duplikatów
     const duplicate = stagingArea.find((t, index) => t.name === name && index !== editIndex);
     if (duplicate) {
@@ -100,6 +111,9 @@ function calculateProject() {
         return;
     }
 
+    const modeSelect = document.getElementById('input-mode-select');
+    const mode = modeSelect ? modeSelect.value : 'PRED';
+
     // Reset starych struktur z graph.js przed nowymi obliczeniami
     nodes = [];
     if (typeof connMatrix === "function") {
@@ -113,17 +127,42 @@ function calculateProject() {
         nameToIndex[task.name] = i;
     });
 
-    // Tworzenie połączeń
-    stagingArea.forEach((task, i) => {
-        if (task.prev !== "-" && task.prev !== "") {
-            const preds = task.prev.split(',').map(p => p.trim());
-            preds.forEach(pName => {
-                if (nameToIndex.hasOwnProperty(pName)) {
-                    link(nameToIndex[pName], i);
+    // Budowanie połączeń
+    if (mode === 'PRED') {
+        // Poprzednicy
+        stagingArea.forEach((task, i) => {
+            if (task.prev !== "-" && task.prev !== "") {
+                const preds = task.prev.split(',').map(p => p.trim());
+                preds.forEach(pName => {
+                    if (nameToIndex.hasOwnProperty(pName)) {
+                        link(nameToIndex[pName], i);
+                    }
+                });
+            }
+        });
+    } else if (mode === 'EVENT') {
+        // Następstwo Zdarzeń
+        
+        // Rozbicie "1-2" na obiekty start i end
+        const events = stagingArea.map(task => {
+            const parts = task.prev.split('-');
+            return { start: parseInt(parts[0]), end: parseInt(parts[1]) };
+        });
+
+        // Szukanie powiązań
+        stagingArea.forEach((currentTask, currentIndex) => {
+            const myStartNode = events[currentIndex].start;
+            
+            stagingArea.forEach((otherTask, otherIndex) => {
+                if (currentIndex !== otherIndex) {
+                    if (events[otherIndex].end === myStartNode) {
+                        // "otherTask" jest poprzednikiem "currentTask"
+                        link(otherIndex, currentIndex);
+                    }
                 }
             });
-        }
-    });
+        });
+    }
 
     // Renderowanie
     renderVisuals();
@@ -209,5 +248,122 @@ function toggleDateInput() {
         }
     } else {
         dateContainer.style.display = 'none';
+    }
+}
+
+// Zmiana trybu wprowadzania z konwersją danych
+function toggleInputMode() {
+    const mode = document.getElementById('input-mode-select').value;
+    const label = document.getElementById('label-prev');
+    const input = document.getElementById('task-prev');
+    const th = document.getElementById('th-prev');
+
+    //  Zmiana napisów interfejsu
+    if (mode === 'EVENT') {
+        label.innerText = "Następstwo zdarzeń";
+        input.placeholder = "np. 1-2";
+        th.innerText = "Następstwo zdarzeń";
+    } else {
+        label.innerText = "Poprzednicy";
+        input.placeholder = "-";
+        th.innerText = "Poprzednicy";
+    }
+
+    //  Konwersja danych w tabeli roboczej
+    if (stagingArea.length > 0) {
+        
+        if (mode === 'EVENT') {
+            // Konswersja poprzednicy -> zdarzenia algorytm Union-Find
+            let parent = {};
+            function find(i) {
+                if (parent[i] === undefined) parent[i] = i;
+                if (parent[i] !== i) parent[i] = find(parent[i]);
+                return parent[i];
+            }
+            function union(i, j) {
+                let rootI = find(i);
+                let rootJ = find(j);
+                if (rootI !== rootJ) parent[rootI] = rootJ; // Scal węzły
+            }
+
+            let nextId = 1;
+            let taskNodes = {};
+            
+            // Przypisanie każdemu zadaniu unikalny punkt startu i końca
+            stagingArea.forEach(t => {
+                taskNodes[t.name] = { start: nextId++, end: nextId++ };
+            });
+            
+            let PROJECT_START = nextId++;
+
+            // Łączenie węzłów na podstawie zależności
+            stagingArea.forEach(t => {
+                if (t.prev === "-" || t.prev === "") {
+                    // Zadania bez poprzedników ruszają z punktu zerowego
+                    union(taskNodes[t.name].start, PROJECT_START);
+                } else {
+                    let preds = t.prev.split(',').map(p => p.trim());
+                    preds.forEach(p => {
+                        if (taskNodes[p]) {
+                            // Start obecnego zadania to Koniec jego poprzednika
+                            union(taskNodes[p].end, taskNodes[t.name].start);
+                        }
+                    });
+                }
+            });
+
+            // Przypisywanie ostatecznych numerów
+            let idMap = {};
+            let finalId = 1;
+            
+            // Rezerwujemy numer '1' dla Głównego Startu Projektu
+            idMap[find(PROJECT_START)] = finalId++;
+
+            stagingArea.forEach(t => {
+                let s = find(taskNodes[t.name].start);
+                let e = find(taskNodes[t.name].end);
+                
+                if (!idMap[s]) idMap[s] = finalId++;
+                if (!idMap[e]) idMap[e] = finalId++;
+                
+                // Zabezpieczenie przed pętlami
+                if(idMap[s] === idMap[e]) {
+                    idMap[e] = finalId++; 
+                }
+                
+                // Nadpisanie pola "prev" nowym, wyliczonym formatem zdarzeń
+                t.prev = `${idMap[s]}-${idMap[e]}`;
+            });
+
+        } else {
+            // --- KONWERSJA: ZDARZENIA -> POPRZEDNICY ---
+            // Konwersja zdarzenia -> poprzednicy zbieramy wszystkie zdarzenia i ich punkty
+            let events = stagingArea.map(t => {
+                let parts = t.prev.split('-');
+                if (parts.length === 2) {
+                    return { name: t.name, start: parseInt(parts[0]), end: parseInt(parts[1]) };
+                }
+                return { name: t.name, start: null, end: null };
+            });
+
+            // Szukamy kto kończy się tam, gdzie my zaczynamy
+            stagingArea.forEach((t, i) => {
+                let myStart = events[i].start;
+                if (myStart !== null) {
+                    let preds = [];
+                    events.forEach(e => {
+                        if (e.end === myStart) {
+                            preds.push(e.name);
+                        }
+                    });
+                    t.prev = preds.length > 0 ? preds.join(', ') : "-";
+                } else {
+                    t.prev = "-";
+                }
+            });
+        }
+        
+        // Odśwież widok tabeli po przekonwertowaniu danych
+        updateWorkTableUI();
     }
 }

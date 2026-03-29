@@ -99,7 +99,17 @@
 <body>
 
     <section id="input-section">
-    <h3>Lista czynności projektu</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Lista czynności projektu</h3>
+            <!-- Przełącznik trybu wprowadzania -->
+            <div>
+                <label for="input-mode-select" style="font-weight: bold; color: #666; font-size: 0.9em;">Tryb danych:</label>
+                <select id="input-mode-select" onchange="toggleInputMode()" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                    <option value="PRED">Poprzednicy (np. A, B)</option>
+                    <option value="EVENT">Następstwo zdarzeń (np. 1-2)</option>
+                </select>
+            </div>
+        </div>
     
     <!-- Formularz dodawania do listy -->
     <div class="input-group" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
@@ -112,7 +122,7 @@
             <input type="number" id="task-time" value="1" min="0" style="width: 60px;">
         </div>
         <div class="input-field">
-            <label>Poprzednicy</label>
+            <label id="label-prev">Poprzednicy</label>
             <input type="text" id="task-prev" placeholder="-" style="width: 100px;">
         </div>
         <button class="btn-add" onclick="addTaskToTable()">Dodaj do listy</button>
@@ -120,19 +130,18 @@
 
     <!-- Tabela robocza (Edytowalna lista) -->
     <table id="work-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <thead>
-                <tr style="background: #eee;">
-                    <th style="border: 1px solid #ddd; padding: 8px;">Nr zadania</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">Czynność</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">Poprzednicy</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">Czas</th>
-                    <th style="border: 1px solid #ddd; padding: 8px;">Akcja</th>
-                </tr>
-            </thead>
-            <tbody id="work-table-body">
-                
-            </tbody>
-        </table>
+        <thead>
+            <tr style="background: #eee;">
+                <th style="border: 1px solid #ddd; padding: 8px;">Nr zadania</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Czynność</th>
+                <th id="th-prev" style="border: 1px solid #ddd; padding: 8px;">Poprzednicy</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Czas</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Akcja</th>
+            </tr>
+        </thead>
+        <tbody id="work-table-body">
+            
+        </tbody>
     </table>
 
     <!-- Import CSV -->
