@@ -135,8 +135,15 @@
         </table>
     </table>
 
+    <!-- Import CSV -->
+    <div style="margin-bottom: 20px;">
+        <label for="csv-file" style="font-weight: bold;">Importuj z pliku CSV:</label>
+        <input type="file" id="csv-file" accept=".csv" style="margin-left: 10px;">
+    </div>
+
     <button class="btn-add" style="background: #27ae60;" onclick="calculateProject()">Oblicz</button>
     <button class="btn-clear" style="background: #e74c3c; margin-left: 10px;" onclick="hardReset()">Reset</button>
+    <button class="btn-add" style="background: #e20ef6; margin-left: 10px;" onclick="importCsv()">Importuj CSV</button>
 </section>
 
     <!-- visualizer.js renderuje interaktywny graf sieciowy -->
@@ -168,5 +175,8 @@
 
     <!-- Obsługa przycisków, formularzy i przesyłanie danych do silnika -->
     <script src="ui-handler.js"></script>
+
+    <!-- Importowanie z pliku csv-->
+    <script src="importer.js"></script>
 </body>
 </html>
