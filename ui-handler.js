@@ -210,6 +210,9 @@ function hardReset(force = false) {
 
     const pathArea = document.getElementById('critical-path-text');
     if (pathArea) pathArea.innerHTML = '';
+
+    const summaryArea = document.getElementById('summary-table-container');
+    if (summaryArea) summaryArea.innerHTML = '';
     
     // Przywrócenie przycisku dodawania do stanu początkowego
     const addBtn = document.querySelector('.btn-add');
@@ -336,7 +339,6 @@ function toggleInputMode() {
             });
 
         } else {
-            // --- KONWERSJA: ZDARZENIA -> POPRZEDNICY ---
             // Konwersja zdarzenia -> poprzednicy zbieramy wszystkie zdarzenia i ich punkty
             let events = stagingArea.map(t => {
                 let parts = t.prev.split('-');

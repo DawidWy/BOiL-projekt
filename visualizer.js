@@ -166,6 +166,55 @@ function renderGanttChart(criticalPath) {
     ganttContent.appendChild(table);
 }
 
+// Renderowanie tabeli z podsumowaniem
+function renderSummaryTable(criticalPath) {
+    const container = document.getElementById('summary-table-container');
+    if (!container || !nodes || nodes.length === 0) return;
+
+    let tableHtml = `
+        <h2 style="margin-top: 0; margin-bottom: 15px; color: #2c3e50;">Podsumowanie Obliczeń CPM</h2>
+        <table style="width: 100%; border-collapse: collapse; text-align: center; font-family: sans-serif;">
+            <thead>
+                <tr style="background-color: #f4f4f4; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Zadanie</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Czas (T)</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;" title="Najwcześniejszy Start">ES</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;" title="Najwcześniejszy Koniec">EF</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;" title="Najpóźniejszy Start">LS</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;" title="Najpóźniejszy Koniec">LF</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;" title="Rezerwa czasu">Rezerwa (R)</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Krytyczne?</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    nodes.forEach((node, i) => {
+        const isCritical = criticalPath.includes(i);
+        const taskName = (typeof stagingArea !== 'undefined' && stagingArea[i]) ? stagingArea[i].name : `Zadanie ${i}`;
+        
+        // Lekkie wyróżnienie wierszy na ścieżce krytycznej (jasnoczerwone tło)
+        const rowStyle = isCritical ? 'background-color: #ffeef0; font-weight: bold; color: #c0392b;' : '';
+        const criticalText = isCritical ? 'TAK' : 'NIE';
+
+        tableHtml += `
+            <tr style="${rowStyle} border-bottom: 1px solid #eee;">
+                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${taskName}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${node.t}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${node.es}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${node.ef}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${node.ls}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${node.lf}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${node.r}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${criticalText}</td>
+            </tr>
+        `;
+    });
+
+    tableHtml += `</tbody></table>`;
+    container.innerHTML = tableHtml;
+}
+
 // Główna funkcja wizualizacji
 function renderVisuals() {
     // Pobieranie wyniku obliczeń
@@ -245,6 +294,7 @@ function renderVisuals() {
         
         pathContainer.innerHTML = `<h3>Ścieżka krytyczna: <span style="color: red;">${criticalPathNames.join(' → ')}</span></h3>`;
     }
+    renderSummaryTable(criticalPath);
 
     renderGanttChart(criticalPath);
     cy.fit(); // Dopasowanie grafu do okna na starcie
