@@ -161,8 +161,36 @@
 
     <!-- Wykres Gantta-->
     <div id="gantt-outer-container" style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; font-family: sans-serif;">
-        <h2>Wykres Gantta (Harmonogram)</h2>
-        <div id="gantt-chart-content"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h2 style="margin: 0;">Wykres Gantta (Harmonogram)</h2>
+            
+            <!-- Panel sterowania wykresem -->
+            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <label for="gantt-axis-mode" style="font-weight: bold; color: #666; font-size: 0.9em;">Oś czasu:</label>
+                    <select id="gantt-axis-mode" onchange="toggleDateInput(); redrawGantt()" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                        <option value="DAYS">Dni (0, 1, 2...)</option>
+                        <option value="DATES">Daty kalendarzowe</option>
+                    </select>
+                </div>
+                
+                <!-- Pole daty (domyślnie ukryte, pokazuje się po wybraniu "Daty") -->
+                <div id="start-date-container" style="display: none;">
+                    <label for="gantt-start-date" style="font-weight: bold; color: #666; font-size: 0.9em;">Data startu:</label>
+                    <input type="date" id="gantt-start-date" onchange="redrawGantt()" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                </div>
+
+                <div>
+                    <label for="gantt-mode" style="font-weight: bold; color: #666; font-size: 0.9em;">Tryb:</label>
+                    <select id="gantt-mode" onchange="redrawGantt()" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                        <option value="ASAP">ASAP (Najwcześniej)</option>
+                        <option value="ALAP">ALAP (Najpóźniej)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div id="gantt-chart-content" style="overflow-x: auto;"></div>
     </div>
 
     <!-- Skrypty logiczne (Dane -> Obliczenia -> Test) -->

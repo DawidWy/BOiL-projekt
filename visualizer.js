@@ -49,48 +49,82 @@ function renderGraphLegend() {
 // Renderowanie wykresu Gantta
 function renderGanttChart(criticalPath) {
     const ganttContent = document.getElementById('gantt-chart-content');
-    if (!ganttContent || nodes.length === 0) return;
+    if (!ganttContent || !nodes || nodes.length === 0) return;
 
+    // Pobranie ustawień trybu (ASAP/ALAP) oraz Osi (Dni/Daty)
+    const modeSelect = document.getElementById('gantt-mode');
+    const mode = modeSelect ? modeSelect.value : 'ASAP';
+    
+    const axisModeSelect = document.getElementById('gantt-axis-mode');
+    const axisMode = axisModeSelect ? axisModeSelect.value : 'DAYS';
+    
+    const dateInput = document.getElementById('gantt-start-date');
+    let startDate = new Date();
+    if (dateInput && dateInput.value) {
+        startDate = new Date(dateInput.value);
+    }
+
+    // Określenie całkowitego czasu trwania projektu
     const maxTime = Math.max(...nodes.map(n => n.ef));
     if (maxTime === 0) return;
 
+    // Funkcja pomocnicza: dodaje X dni do daty startowej i zwraca format DD.MM
+    function getFormattedDate(baseDate, daysToAdd) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + daysToAdd);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return `${day}.${month}`;
+    }
+
+    // Inicjalizacja tabeli HTML
     const table = document.createElement('table');
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
-    table.style.marginTop = '25px';
+    table.style.marginTop = '10px';
     table.style.fontFamily = 'sans-serif';
     table.style.tableLayout = 'fixed'; 
 
-    // Liczby jako punkty kontrolne na osi (nad liniami)
     let headerHtml = `<tr><th style="border: 1px solid #ddd; padding: 10px; width: 120px; background: #f4f4f4;">Zadanie</th>`;
     
+    // Generowanie osi czasu (nagłówki)
     for (let t = 0; t < maxTime; t++) {
+        let label = axisMode === 'DATES' ? getFormattedDate(startDate, t) : t;
         headerHtml += `
-            <th style="border-left: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0; position: relative; height: 30px; background: #f4f4f4;">
-                <span style="position: absolute; left: -5px; top: 8px; font-size: 0.75em; font-weight: normal; color: #666;">${t}</span>
+            <th style="border-left: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0; position: relative; height: 30px; background: #f4f4f4; min-width: 35px;">
+                <span style="position: absolute; left: -12px; top: 8px; font-size: 0.75em; font-weight: normal; color: #666; background: #f4f4f4; padding: 0 2px; z-index: 1;">${label}</span>
             </th>`;
     }
+    
     // Ostatni punkt na osi
+    let lastLabel = axisMode === 'DATES' ? getFormattedDate(startDate, maxTime) : maxTime;
     headerHtml += `
         <th style="border-left: 1px solid #ddd; border-bottom: 1px solid #ddd; width: 10px; position: relative; background: #f4f4f4;">
-            <span style="position: absolute; left: -5px; top: 8px; font-size: 0.75em; font-weight: normal; color: #666;">${maxTime}</span>
+            <span style="position: absolute; left: -12px; top: 8px; font-size: 0.75em; font-weight: normal; color: #666; background: #f4f4f4; padding: 0 2px; z-index: 1;">${lastLabel}</span>
         </th></tr>`;
     
     table.innerHTML = headerHtml;
 
-    // Rysowanie wierszy zadań
+    // Generowanie wierszy z paskami zadań
     nodes.forEach((node, i) => {
         const isCritical = criticalPath.includes(i);
         const row = table.insertRow();
 
         const cellLabel = row.insertCell(0);
-        cellLabel.innerText = `Zadanie ${i}`;
+        const taskName = typeof stagingArea !== 'undefined' && stagingArea[i] ? stagingArea[i].name : `Zadanie ${i}`;
+        
+        cellLabel.innerText = taskName;
         cellLabel.style.border = "1px solid #ddd";
         cellLabel.style.padding = "6px 10px";
+
+        // Wyróżnienie zadań krytycznych
         if (isCritical) {
             cellLabel.style.color = "#ff4d4d";
             cellLabel.style.fontWeight = "bold";
         }
+
+        const start = mode === 'ASAP' ? node.es : node.ls;
+        const end = mode === 'ASAP' ? node.ef : node.lf;
 
         for (let t = 0; t < maxTime; t++) {
             const cellTime = row.insertCell(t + 1);
@@ -99,23 +133,35 @@ function renderGanttChart(criticalPath) {
             cellTime.style.position = "relative";
             cellTime.style.height = "32px";
 
-            if (t >= node.es && t < node.ef) {
+            if (t >= start && t < end) {
                 const bar = document.createElement('div');
                 bar.style.position = "absolute";
                 bar.style.top = "7px";
                 bar.style.left = "0";
                 bar.style.width = "100%"; 
                 bar.style.height = "18px";
-                bar.style.backgroundColor = isCritical ? "#ff4d4d" : "#4dabff";
-                bar.title = `Zadanie ${i}: [${node.es} - ${node.ef}]`;
+                
+                if (isCritical) {
+                    bar.style.backgroundColor = "#ff4d4d";
+                } else {
+                    bar.style.backgroundColor = mode === 'ASAP' ? "#4dabff" : "#9b59b6";
+                }
+                
+                // Dostosowanie dymka podpowiedzi zależnie od trybu
+                if (axisMode === 'DATES') {
+                    bar.title = `${taskName}: [${getFormattedDate(startDate, start)} - ${getFormattedDate(startDate, end)}] (${mode})`;
+                } else {
+                    bar.title = `${taskName}: [Dzień ${start} - Dzień ${end}] (${mode})`;
+                }
+                
                 cellTime.appendChild(bar);
             }
         }
-        // Domykająca pionowa linia na końcu wiersza
         const lastCell = row.insertCell(-1);
         lastCell.style.borderLeft = "1px solid #eee";
     });
 
+    // Oczyszczenie starego wykresu i wstawienie nowo wygenerowanej tabeli
     ganttContent.innerHTML = '';
     ganttContent.appendChild(table);
 }

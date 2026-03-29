@@ -186,3 +186,28 @@ function hardReset(force = false) {
 document.addEventListener('DOMContentLoaded', () => {
     hardReset(true);
 });
+
+// Zmiana trybu Gantta
+function redrawGantt() {
+    if (nodes && nodes.length > 0 && typeof solveCPM === "function") {
+        const criticalPath = solveCPM();
+        renderGanttChart(criticalPath);
+    }
+}
+
+// Pokazuje/ukrywa wybór daty i ustawia dzisiejszą datę jako domyślną
+function toggleDateInput() {
+    const axisMode = document.getElementById('gantt-axis-mode').value;
+    const dateContainer = document.getElementById('start-date-container');
+    const dateInput = document.getElementById('gantt-start-date');
+
+    if (axisMode === 'DATES') {
+        dateContainer.style.display = 'block';
+        // Jeśli pole jest puste, ustaw dzisiejszą datę jako startową
+        if (!dateInput.value) {
+            dateInput.valueAsDate = new Date();
+        }
+    } else {
+        dateContainer.style.display = 'none';
+    }
+}
