@@ -12,7 +12,7 @@ function createNodeHtml(nodeTitle, nodeData, isCritical, isLegend = false) {
                 <div style="flex: 1; padding: 4px;" title="Earliest Finish (Najwcześniejszy Koniec)">${nodeData.ef}</div>
             </div>
             
-            <div style="padding: 8px; background: #f0f0f0; border-bottom: 1px solid #ccc; font-weight: bold; font-size: 1.1em; color: #333;">
+            <div style="padding: 8px; background: #f0f0f0; border-bottom: 1px solid #ccc; font-weight: bold; font-size: 1.1em; color: #333;" title="${nodeTitle}">
                 ${nodeTitle}
             </div>
             
@@ -207,7 +207,16 @@ function renderVisuals() {
     cy.nodeHtmlLabel([{
         query: 'node', halign: 'center', valign: 'center', halignBox: 'center', valignBox: 'center',
         tpl: function(data) {
-            return createNodeHtml(`Zadanie ${data.id}`, data.cpmData, data.isCritical);
+            let rawName = (typeof stagingArea !== 'undefined' && stagingArea[data.id]) 
+                ? stagingArea[data.id].name 
+                : `Zadanie ${data.id}`;
+
+            const MAX_LENGTH = 12;
+            let displayName = rawName.length > MAX_LENGTH 
+                ? rawName.substring(0, MAX_LENGTH - 3) + '...' 
+                : rawName;
+
+            return createNodeHtml(displayName, data.cpmData, data.isCritical);
         }
     }]);
 
@@ -228,7 +237,13 @@ function renderVisuals() {
     // Wyświetlenie tekstowo ścieżki krytycznej
     const pathContainer = document.getElementById('critical-path-text');
     if (pathContainer) {
-        pathContainer.innerHTML = `<h3>Ścieżka krytyczna: <span style="color: red;">${criticalPath.join(' → ')}</span></h3>`;
+        const criticalPathNames = criticalPath.map(index => {
+            return (typeof stagingArea !== 'undefined' && stagingArea[index]) 
+                ? stagingArea[index].name 
+                : `Zadanie ${index}`;
+        });
+        
+        pathContainer.innerHTML = `<h3>Ścieżka krytyczna: <span style="color: red;">${criticalPathNames.join(' → ')}</span></h3>`;
     }
 
     renderGanttChart(criticalPath);
